@@ -7,7 +7,7 @@ export interface AuthenticatedRequest extends Request {
 }
 
 // Hard-coded CMS admin email
-const hardCodedAdminEmail = "derickandrewferdinands@gmail.com";
+const hardCodedAdminEmail = "chathubandara500@gmail.com";
 
 export const verifyToken = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
