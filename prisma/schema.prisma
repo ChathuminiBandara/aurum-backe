@@ -1,0 +1,113 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Product {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String?
+  price       Float
+  imageUrl    String
+  quantity    Int         @default(0)
+  category    Category?   @relation(fields: [categoryId], references: [id])
+  categoryId  Int?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  orderItems  OrderItem[]
+  cartItems   CartItem[]
+  favorites   Favorite[]
+  reviews     Review[]    // <-- New relation for reviews
+}
+
+model Customer {
+  id          Int         @id @default(autoincrement())
+  firebaseUid String      @unique
+  email       String      @unique
+  name        String
+  orders      Order[]
+  cart        Cart?
+  favorites   Favorite[]
+  reviews     Review[]    // <-- Optional: customer’s reviews
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Order {
+  id               Int         @id @default(autoincrement())
+  stripeSessionId  String?     // <-- New field to store Stripe session ID
+  amount           Float
+  status           String      @default("pending")
+  customer         Customer    @relation(fields: [customerId], references: [id])
+  customerId       Int
+  orderItems       OrderItem[]
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
+model OrderItem {
+  id         Int      @id @default(autoincrement())
+  quantity   Int
+  price      Float    // Price at the time of order
+  product    Product  @relation(fields: [productId], references: [id])
+  productId  Int
+  order      Order    @relation(fields: [orderId], references: [id])
+  orderId    Int
+}
+
+model Cart {
+  id         Int        @id @default(autoincrement())
+  customer   Customer   @relation(fields: [customerId], references: [id])
+  customerId Int        @unique
+  items      CartItem[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+
+model CartItem {
+  id         Int      @id @default(autoincrement())
+  cart       Cart     @relation(fields: [cartId], references: [id])
+  cartId     Int
+  product    Product  @relation(fields: [productId], references: [id])
+  productId  Int
+  quantity   Int      @default(1)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// New model for product categories
+model Category {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String?
+  products    Product[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+// New model for favorites (client's favourite products)
+model Favorite {
+  id          Int       @id @default(autoincrement())
+  customer    Customer  @relation(fields: [customerId], references: [id])
+  customerId  Int
+  product     Product   @relation(fields: [productId], references: [id])
+  productId   Int
+  createdAt   DateTime  @default(now())
+}
+
+model Review {
+  id          Int       @id @default(autoincrement())
+  rating      Int       // e.g., 1 to 5
+  reviewText  String?
+  product     Product   @relation(fields: [productId], references: [id])
+  productId   Int
+  customer    Customer  @relation(fields: [customerId], references: [id])
+  customerId  Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
